@@ -1,0 +1,20 @@
+# Environments
+.venv/
+env/
+venv/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Data & Models (track code, not large binaries)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+models/*
+!models/.gitkeep
+
+# Environment variables & secrets
+.env
