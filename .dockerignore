@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+notebooks/
+tests/
+data/raw/
+data/processed/
+.pytest_cache/
+*.log

@@ -18,3 +18,8 @@ models/*
 
 # Environment variables & secrets
 .env
+
+# MLflow local tracking
+mlruns/
+mlartifacts/
+mlflow.db
