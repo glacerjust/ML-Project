@@ -33,7 +33,8 @@ jobs:
           curl -s -o data/raw/Telco-Customer-Churn.csv https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv
           python -m src.data.preprocessing
           python -m src.training.train --tuned
-          python -m src.registry.model_registry --export
+          python -m src.registry.model_registry --register-best
+          python -m src.registry.model_registry --promote 1
 
       - name: Run automated test suite
         run: |
