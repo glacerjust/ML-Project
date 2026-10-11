@@ -70,7 +70,11 @@ def run_quality_gate(
         cand_metrics = evaluate_version_on_test_data(model_name, "candidate", test_df)
     except Exception as e:  # noqa: BLE001
         print(f"No active candidate model found: {e}")
-        return {"decision": "ERROR", "reason": "No candidate model"}
+        return {
+            "decision": "NO_OP",
+            "production_version": prod_metrics["version"],
+            "reason": f"No active candidate model found: {e}",
+        }
 
     if prod_metrics["version"] == cand_metrics["version"]:
         print(f"\n[Quality Gate] No active challenger: Version {prod_metrics['version']} is already the active Production model.")

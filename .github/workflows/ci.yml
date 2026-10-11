@@ -35,6 +35,7 @@ jobs:
           python -m src.training.train --tuned
           python -m src.registry.model_registry --register-best
           python -m src.registry.model_registry --promote 1
+          python -m src.retraining.pipeline
 
       - name: Run automated test suite
         run: |
