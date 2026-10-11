@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# AWS Lambda Web Adapter: allows FastAPI to run unchanged on AWS Lambda, ECS, or locally
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 /lambda-adapter /opt/extensions/lambda-adapter
+ENV PORT=8000
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 

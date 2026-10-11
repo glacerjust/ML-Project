@@ -84,6 +84,17 @@ def set_model_stage(
     print(f"Model '{model_name}' Version {version} tagged and aliased as '@{stage}'.")
 
     if stage == "production":
+        # 1. Remove @candidate alias so the promoted model is not its own challenger
+        try:
+            client.delete_registered_model_alias(name=model_name, alias="candidate")
+        except mlflow.exceptions.MlflowException:
+            pass
+
+        # 2. Archive older versions
+        for mv in client.search_model_versions(f"name='{model_name}'"):
+            if str(mv.version) != str(version):
+                client.set_model_version_tag(name=model_name, version=mv.version, key="stage", value="archived")
+
         export_production_bundle(model_name=model_name)
 
 

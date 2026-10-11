@@ -11,6 +11,14 @@ def client():
         yield test_client
 
 
+def test_dashboard_endpoint(client: TestClient):
+    """Verify that root dashboard returns 200 and renders HTML."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers.get("content-type", "")
+    assert "Telco Churn AI Platform" in response.text
+
+
 def test_health_endpoint(client: TestClient):
     """Verify that the health check returns 200 and healthy status."""
     response = client.get("/health")
@@ -18,6 +26,18 @@ def test_health_endpoint(client: TestClient):
     data = response.json()
     assert data["status"] == "healthy"
     assert "model_version" in data
+
+
+def test_metrics_endpoint(client: TestClient):
+    """Verify that operational metrics endpoint reports counters and distributions."""
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert "request_count" in data
+    assert "error_count" in data
+    assert "avg_latency_ms" in data
+    assert "p95_latency_ms" in data
+    assert "predictions_distribution" in data
 
 
 def test_predict_endpoint_valid_payload(client: TestClient):

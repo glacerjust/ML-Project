@@ -1,5 +1,5 @@
 import os
-
+from typing import Tuple
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -39,29 +39,54 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def split_data(
+    df: pd.DataFrame,
+    test_size: float = 0.15,
+    val_size: float = 0.15,
+    random_state: int = 42,
+):
+    """Split dataframe into stratified Train, Val, and Test sets."""
+    df = clean_data(df)
+    # Safely map 'Yes'/'No' to 1/0 regardless of pandas string vs object dtype
+    if df["Churn"].isin(["Yes", "No"]).any():
+        y = (df["Churn"] == "Yes").astype(int)
+    else:
+        y = df["Churn"].astype(int)
+    X = df.drop(columns=["Churn"])
+
+    temp_size = test_size + val_size
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y, test_size=temp_size, random_state=random_state, stratify=y
+    )
+
+    relative_test_size = test_size / temp_size
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp, test_size=relative_test_size, random_state=random_state, stratify=y_temp
+    )
+    return X_train, X_val, X_test, y_train, y_val, y_test
+
+
 def prepare_and_save_data(
     raw_path: str = "data/raw/Telco-Customer-Churn.csv",
     processed_dir: str = "data/processed",
     test_size: float = 0.15,
     val_size: float = 0.15,
     random_state: int = 42,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Clean, split, and persist datasets to data/processed/ for reproducible lineage."""
     df = pd.read_csv(raw_path)
-    df = clean_data(df)
-
-    # Encode target to binary 0/1 integer
-    df["Churn"] = (df["Churn"] == "Yes").astype(int)
-
-    temp_size = test_size + val_size
-    train_df, temp_df = train_test_split(
-        df, test_size=temp_size, random_state=random_state, stratify=df["Churn"]
+    X_train, X_val, X_test, y_train, y_val, y_test = split_data(
+        df, test_size=test_size, val_size=val_size, random_state=random_state
     )
 
-    relative_test_size = test_size / temp_size
-    val_df, test_df = train_test_split(
-        temp_df, test_size=relative_test_size, random_state=random_state, stratify=temp_df["Churn"]
-    )
+    train_df = X_train.copy()
+    train_df["Churn"] = y_train
+
+    val_df = X_val.copy()
+    val_df["Churn"] = y_val
+
+    test_df = X_test.copy()
+    test_df["Churn"] = y_test
 
     os.makedirs(processed_dir, exist_ok=True)
     train_df.to_csv(os.path.join(processed_dir, "train.csv"), index=False)

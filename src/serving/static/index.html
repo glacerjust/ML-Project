@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Churn AI Platform — Production Inference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --card-bg: rgba(18, 24, 38, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #06b6d4;
+      --accent-indigo: #6366f1;
+      --accent-violet: #8b5cf6;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+    body {
+      background: radial-gradient(circle at 15% 15%, #131b2e 0%, var(--bg-dark) 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.5rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; width: 100%; }
+
+    /* Header */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .brand p { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem; }
+    .badge-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .badge {
+      padding: 0.4rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+    /* Presets bar */
+    .presets-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+    }
+    .presets-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-preset:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    /* Grid Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 960px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Form Section */
+    .form-sections { display: flex; flex-direction: column; gap: 1.5rem; }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title span { color: var(--accent-cyan); }
+    .fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem 1.25rem;
+    }
+    .field-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .slider-val { font-family: 'JetBrains Mono', monospace; color: var(--accent-cyan); font-weight: 600; }
+    input[type="range"] {
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+      width: 100%;
+    }
+    select, input[type="number"], input[type="text"] {
+      background: rgba(10, 14, 23, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2); }
+
+    /* Prediction Button */
+    .btn-submit {
+      margin-top: 1rem;
+      background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+      border: none;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+      transition: all 0.25s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(6, 182, 212, 0.45);
+    }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* Results Column */
+    .results-col { display: flex; flex-direction: column; gap: 1.5rem; }
+    .result-card {
+      text-align: center;
+      position: sticky;
+      top: 2rem;
+    }
+    .gauge-wrapper {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 1.5rem auto 1rem;
+    }
+    .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+    .gauge-bg { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 12; }
+    .gauge-progress {
+      fill: none;
+      stroke: var(--accent-cyan);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 440;
+      stroke-dashoffset: 440;
+      transition: stroke-dashoffset 1s ease-out, stroke 0.5s ease;
+    }
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .verdict-badge {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      border-radius: 9999px;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      letter-spacing: 0.02em;
+      transition: all 0.3s;
+    }
+    .verdict-safe {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .verdict-churn {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .meta-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+    .meta-box {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+    }
+    .meta-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .meta-value { font-size: 0.95rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 0.2rem; color: #e2e8f0; }
+
+    footer {
+      margin-top: auto;
+      padding-top: 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    footer a { color: var(--accent-cyan); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <h1>Telco Churn AI Platform</h1>
+      <p>Real-Time MLOps Inference Engine • XGBoost Champion Model</p>
+    </div>
+    <div class="badge-group">
+      <div class="badge"><span class="badge-dot"></span> System Live</div>
+      <div class="badge" id="versionBadge">Version 2 (@production)</div>
+      <div class="badge">AWS Cloud Ready</div>
+    </div>
+  </header>
+
+  <!-- Presets -->
+  <div class="presets-bar">
+    <div class="presets-title">Quick Demo Presets:</div>
+    <button type="button" class="btn-preset" onclick="loadPreset('high-risk')">⚠️ High-Risk Churner</button>
+    <button type="button" class="btn-preset" onclick="loadPreset('loyal')">🛡️ Loyal Retained Customer</button>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Form Inputs -->
+    <form id="churnForm" class="form-sections" onsubmit="event.preventDefault(); predictChurn();">
+      
+      <!-- Card 1: Account & Demographics -->
+      <div class="card">
+        <div class="card-title"><span>01</span> Account & Demographics</div>
+        <div class="fields-grid">
+          <div class="field-group">
+            <label>Gender</label>
+            <select id="gender">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Senior Citizen</label>
+            <select id="SeniorCitizen">
+              <option value="0">No (0)</option>
+              <option value="1">Yes (1)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Partner</label>
+            <select id="Partner">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Dependents</label>
+            <select id="Dependents">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field-group" style="grid-column: 1 / -1;">
+            <label>Tenure (Months): <span class="slider-val" id="tenureVal">12</span></label>
+            <input type="range" id="tenure" min="0" max="72" value="12" oninput="document.getElementById('tenureVal').innerText = this.value; recalcTotal();">
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Subscriptions & Services -->
+      <div class="card">
+        <div class="card-title"><span>02</span> Subscriptions & Add-ons</div>
+        <div class="fields-grid">
+          <div class="field-group">
+            <label>Internet Service</label>
+            <select id="InternetService">
+              <option value="Fiber optic">Fiber optic</option>
+              <option value="DSL">DSL</option>
+              <option value="No">No Internet</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Phone Service</label>
+            <select id="PhoneService">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Multiple Lines</label>
+            <select id="MultipleLines">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No phone service">No phone service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Online Security</label>
+            <select id="OnlineSecurity">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Online Backup</label>
+            <select id="OnlineBackup">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Device Protection</label>
+            <select id="DeviceProtection">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Tech Support</label>
+            <select id="TechSupport">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Streaming TV</label>
+            <select id="StreamingTV">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Streaming Movies</label>
+            <select id="StreamingMovies">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+              <option value="No internet service">No internet service</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Billing & Contract -->
+      <div class="card">
+        <div class="card-title"><span>03</span> Billing & Payment Details</div>
+        <div class="fields-grid">
+          <div class="field-group">
+            <label>Contract</label>
+            <select id="Contract">
+              <option value="Month-to-month">Month-to-month</option>
+              <option value="One year">One year</option>
+              <option value="Two year">Two year</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>Paperless Billing</label>
+            <select id="PaperlessBilling">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field-group" style="grid-column: 1 / -1;">
+            <label>Payment Method</label>
+            <select id="PaymentMethod">
+              <option value="Electronic check">Electronic check</option>
+              <option value="Mailed check">Mailed check</option>
+              <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+              <option value="Credit card (automatic)">Credit card (automatic)</option>
+            </select>
+          </div>
+          <div class="field-group" style="grid-column: 1 / -1;">
+            <label>Monthly Charges ($): <span class="slider-val" id="monthlyVal">70.35</span></label>
+            <input type="range" id="MonthlyCharges" min="18.0" max="120.0" step="0.25" value="70.35" oninput="document.getElementById('monthlyVal').innerText = parseFloat(this.value).toFixed(2); recalcTotal();">
+          </div>
+          <div class="field-group" style="grid-column: 1 / -1;">
+            <label>Total Charges ($)</label>
+            <input type="number" id="TotalCharges" step="0.01" value="844.20">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span>⚡ Run Real-Time Churn Inference</span>
+      </button>
+    </form>
+
+    <!-- Results Panel -->
+    <div class="results-col">
+      <div class="card result-card">
+        <div class="card-title" style="justify-content: center;">Inference Output</div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Model Churn Probability</p>
+
+        <div class="gauge-wrapper">
+          <svg class="gauge-svg" viewBox="0 0 160 160">
+            <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
+            <circle class="gauge-progress" id="gaugeProgress" cx="80" cy="80" r="70"></circle>
+          </svg>
+          <div class="gauge-text" id="probText">--%</div>
+        </div>
+
+        <div class="verdict-badge verdict-safe" id="verdictBadge">Ready</div>
+
+        <div class="meta-metrics">
+          <div class="meta-box">
+            <div class="meta-label">Latency</div>
+            <div class="meta-value" id="latencyVal">-- ms</div>
+          </div>
+          <div class="meta-box">
+            <div class="meta-label">Threshold</div>
+            <div class="meta-value" id="thresholdVal">0.50</div>
+          </div>
+          <div class="meta-box" style="grid-column: 1 / -1;">
+            <div class="meta-label">Active Registry Model</div>
+            <div class="meta-value" id="modelVerVal">CustomerChurnModel:v2</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <a href="/docs" target="_blank">Interactive Swagger OpenAPI (/docs)</a>
+    <span>•</span>
+    <a href="/health" target="_blank">Health Check (/health)</a>
+    <span>•</span>
+    <a href="/metrics" target="_blank">Operational Metrics (/metrics)</a>
+    <span>•</span>
+    <a href="https://github.com/glacerjust/ML-Project" target="_blank">GitHub Repository</a>
+  </footer>
+</div>
+
+<script>
+  function recalcTotal() {
+    const tenure = parseInt(document.getElementById('tenure').value) || 0;
+    const monthly = parseFloat(document.getElementById('MonthlyCharges').value) || 0;
+    const totalInput = document.getElementById('TotalCharges');
+    if (tenure > 0) {
+      totalInput.value = (tenure * monthly).toFixed(2);
+    } else {
+      totalInput.value = "0.00";
+    }
+  }
+
+  function loadPreset(type) {
+    if (type === 'high-risk') {
+      document.getElementById('gender').value = 'Female';
+      document.getElementById('SeniorCitizen').value = '0';
+      document.getElementById('Partner').value = 'No';
+      document.getElementById('Dependents').value = 'No';
+      document.getElementById('tenure').value = '2';
+      document.getElementById('tenureVal').innerText = '2';
+      document.getElementById('InternetService').value = 'Fiber optic';
+      document.getElementById('PhoneService').value = 'Yes';
+      document.getElementById('MultipleLines').value = 'No';
+      document.getElementById('OnlineSecurity').value = 'No';
+      document.getElementById('OnlineBackup').value = 'No';
+      document.getElementById('DeviceProtection').value = 'No';
+      document.getElementById('TechSupport').value = 'No';
+      document.getElementById('StreamingTV').value = 'Yes';
+      document.getElementById('StreamingMovies').value = 'Yes';
+      document.getElementById('Contract').value = 'Month-to-month';
+      document.getElementById('PaperlessBilling').value = 'Yes';
+      document.getElementById('PaymentMethod').value = 'Electronic check';
+      document.getElementById('MonthlyCharges').value = '89.50';
+      document.getElementById('monthlyVal').innerText = '89.50';
+      recalcTotal();
+    } else if (type === 'loyal') {
+      document.getElementById('gender').value = 'Male';
+      document.getElementById('SeniorCitizen').value = '0';
+      document.getElementById('Partner').value = 'Yes';
+      document.getElementById('Dependents').value = 'Yes';
+      document.getElementById('tenure').value = '65';
+      document.getElementById('tenureVal').innerText = '65';
+      document.getElementById('InternetService').value = 'DSL';
+      document.getElementById('PhoneService').value = 'Yes';
+      document.getElementById('MultipleLines').value = 'Yes';
+      document.getElementById('OnlineSecurity').value = 'Yes';
+      document.getElementById('OnlineBackup').value = 'Yes';
+      document.getElementById('DeviceProtection').value = 'Yes';
+      document.getElementById('TechSupport').value = 'Yes';
+      document.getElementById('StreamingTV').value = 'No';
+      document.getElementById('StreamingMovies').value = 'No';
+      document.getElementById('Contract').value = 'Two year';
+      document.getElementById('PaperlessBilling').value = 'No';
+      document.getElementById('PaymentMethod').value = 'Credit card (automatic)';
+      document.getElementById('MonthlyCharges').value = '55.20';
+      document.getElementById('monthlyVal').innerText = '55.20';
+      recalcTotal();
+    }
+    predictChurn();
+  }
+
+  async function predictChurn() {
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span>⏳ Processing Inference...</span>';
+    btn.disabled = true;
+
+    const payload = {
+      gender: document.getElementById('gender').value,
+      SeniorCitizen: parseInt(document.getElementById('SeniorCitizen').value),
+      Partner: document.getElementById('Partner').value,
+      Dependents: document.getElementById('Dependents').value,
+      tenure: parseInt(document.getElementById('tenure').value),
+      PhoneService: document.getElementById('PhoneService').value,
+      MultipleLines: document.getElementById('MultipleLines').value,
+      InternetService: document.getElementById('InternetService').value,
+      OnlineSecurity: document.getElementById('OnlineSecurity').value,
+      OnlineBackup: document.getElementById('OnlineBackup').value,
+      DeviceProtection: document.getElementById('DeviceProtection').value,
+      TechSupport: document.getElementById('TechSupport').value,
+      StreamingTV: document.getElementById('StreamingTV').value,
+      StreamingMovies: document.getElementById('StreamingMovies').value,
+      Contract: document.getElementById('Contract').value,
+      PaperlessBilling: document.getElementById('PaperlessBilling').value,
+      PaymentMethod: document.getElementById('PaymentMethod').value,
+      MonthlyCharges: parseFloat(document.getElementById('MonthlyCharges').value),
+      TotalCharges: parseFloat(document.getElementById('TotalCharges').value) || 0.0
+    };
+
+    const t0 = performance.now();
+    try {
+      const resp = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const t1 = performance.now();
+      const latency = (t1 - t0).toFixed(1);
+
+      if (!resp.ok) {
+        throw new Error('API Error: ' + resp.status);
+      }
+
+      const data = await resp.json();
+      updateResults(data, latency);
+    } catch (err) {
+      alert('Prediction failed: ' + err.message);
+    } finally {
+      btn.innerHTML = '<span>⚡ Run Real-Time Churn Inference</span>';
+      btn.disabled = false;
+    }
+  }
+
+  function updateResults(data, latency) {
+    const probPct = Math.round(data.churn_probability * 100);
+    document.getElementById('probText').innerText = probPct + '%';
+    document.getElementById('latencyVal').innerText = latency + ' ms';
+    document.getElementById('thresholdVal').innerText = data.threshold.toFixed(2);
+    document.getElementById('modelVerVal').innerText = 'Version ' + data.model_version;
+
+    // SVG circumference is 2 * PI * 70 = ~439.82
+    const circumference = 439.82;
+    const offset = circumference - (data.churn_probability * circumference);
+    const circle = document.getElementById('gaugeProgress');
+    circle.style.strokeDashoffset = offset;
+
+    const badge = document.getElementById('verdictBadge');
+    if (data.churn_prediction === 1) {
+      circle.style.stroke = '#ef4444';
+      badge.className = 'verdict-badge verdict-churn';
+      badge.innerText = '🚨 HIGH RISK OF CHURN';
+    } else {
+      circle.style.stroke = '#10b981';
+      badge.className = 'verdict-badge verdict-safe';
+      badge.innerText = '✅ LIKELY TO STAY';
+    }
+  }
+
+  // Pre-load on load
+  window.addEventListener('DOMContentLoaded', () => {
+    recalcTotal();
+  });
+</script>
+
+</body>
+</html>
