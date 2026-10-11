@@ -128,6 +128,12 @@ Client / Browser ─────────── GET /health ─────�
    {"status":"healthy","model_version":"2"}
    ```
 
+### 📸 Verified AWS Cloud Evidence
+
+| Amazon ECR Repository | Amazon ECS Fargate Task Definition | Amazon CloudWatch Logs |
+| :---: | :---: | :---: |
+| ![Amazon ECR Repository](docs/image/ECRRepository.png) | ![Amazon ECS Task Definition](docs/image/ECS_Task_Definition.png) | ![Amazon CloudWatch Logs](docs/image/CloudWatch_Logs.png) |
+
 > **💡 FinOps & Cost Optimization Note:**  
 > The standalone AWS ECS Fargate task was verified and safely spun down to eliminate unnecessary idle cloud compute charges ($30+/month for ALB & IPv4). The live production web application is continuously served via serverless container architecture with automated scale-to-zero.
 
