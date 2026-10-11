@@ -1,6 +1,5 @@
 import time
 from contextlib import asynccontextmanager
-
 from pathlib import Path
 
 import pandas as pd
@@ -85,6 +84,6 @@ def predict(customer: CustomerInput):
             threshold=art.threshold,
             model_version=art.version,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         collector.record_request(latency_ms=0.0, is_error=True)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

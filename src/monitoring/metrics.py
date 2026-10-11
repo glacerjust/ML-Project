@@ -1,6 +1,5 @@
 import threading
-import time
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MetricsCollector:
@@ -10,8 +9,8 @@ class MetricsCollector:
         self._lock = threading.Lock()
         self.request_count = 0
         self.error_count = 0
-        self.latencies_ms: List[float] = []
-        self.predictions: Dict[int, int] = {0: 0, 1: 0}
+        self.latencies_ms: list[float] = []
+        self.predictions: dict[int, int] = {0: 0, 1: 0}
 
     def record_request(
         self, latency_ms: float, prediction: int | None = None, is_error: bool = False
@@ -31,7 +30,7 @@ class MetricsCollector:
                         self.predictions.get(prediction, 0) + 1
                     )
 
-    def get_summary(self, model_version: str = "unknown") -> Dict[str, Any]:
+    def get_summary(self, model_version: str = "unknown") -> dict[str, Any]:
         with self._lock:
             total_predictions = sum(self.predictions.values())
             churn_ratio = (

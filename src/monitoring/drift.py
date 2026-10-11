@@ -1,5 +1,6 @@
 import argparse
-from typing import Any, Dict, List
+from typing import Any
+
 import pandas as pd
 from scipy.stats import ks_2samp
 
@@ -8,7 +9,7 @@ NUMERICAL_FEATURES = ["tenure", "MonthlyCharges", "TotalCharges"]
 
 def detect_numerical_drift(
     reference: pd.Series, current: pd.Series, alpha: float = 0.05
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Two-sample Kolmogorov-Smirnov (KS) test for numerical distribution drift.
     Null Hypothesis (H0): Both samples come from the same distribution.
@@ -32,12 +33,12 @@ def detect_numerical_drift(
 
 def analyze_dataset_drift(
     reference_df: pd.DataFrame, current_df: pd.DataFrame, alpha: float = 0.05
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze numerical features for data drift against the baseline reference dataset.
     """
-    feature_reports: Dict[str, Any] = {}
-    drifted_features: List[str] = []
+    feature_reports: dict[str, Any] = {}
+    drifted_features: list[str] = []
 
     for col in NUMERICAL_FEATURES:
         if col in reference_df.columns and col in current_df.columns:

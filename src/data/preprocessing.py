@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -72,7 +72,7 @@ def prepare_and_save_data(
     test_size: float = 0.15,
     val_size: float = 0.15,
     random_state: int = 42,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Clean, split, and persist datasets to data/processed/ for reproducible lineage."""
     df = pd.read_csv(raw_path)
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(

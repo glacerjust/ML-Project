@@ -150,7 +150,7 @@ async def main():
                 print(f"Warning: Healthcheck failed with status {health_resp.status_code}")
             else:
                 print(f"Service Status: Online ({health_resp.json()})")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"\n[ERROR] Could not connect to API at {health_url}: {e}")
             print("Make sure your FastAPI server is running with: uvicorn src.serving.main:app --port 8000")
             return
